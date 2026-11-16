@@ -1,0 +1,15 @@
+# Local dependencies and generated artifacts
+.venv/
+.toolchain/
+build/
+dist/
+logs/
+__pycache__/
+*.pyc
+*.log
+# Local investigation must never be published here
+/graphify-out/
+/investigation/
+/captures/
+.env
+.env.*

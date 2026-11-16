@@ -1,0 +1,15 @@
+* text=auto
+*.py text eol=lf
+*.c text eol=lf
+*.h text eol=lf
+*.S text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.dll binary
+*.asi binary
+*.zip binary
+# Preserve upstream bytes: vendor/manifest.json verifies exact fingerprints.
+/vendor/** -text
+/vendor/manifest.json text eol=lf
