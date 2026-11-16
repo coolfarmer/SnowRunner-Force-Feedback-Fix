@@ -1,6 +1,11 @@
 # Compilation et tests
 
-Depuis la racine du dépôt, sous Windows x64 avec Python 3.10 ou plus récent :
+Tous les chemins de ce guide sont relatifs à la racine du dépôt du plugin
+(`release/` lorsqu'il se trouve dans l'espace d'investigation).
+
+## Dépôt autonome
+
+Depuis cette racine, sous Windows x64 avec Python 3.10 ou plus récent :
 
 ```powershell
 python -m venv .venv
@@ -40,3 +45,32 @@ empreintes). Les hôtes de test n'y sont jamais inclus.
 La compilation et ces tests ne constituent pas une validation en jeu ou matérielle.
 Les sorties de compilation, journaux et archives sont ignorés par Git ; le ZIP
 peut être joint séparément à une version GitHub.
+
+## Espace de travail d'investigation existant
+
+Dans l'espace local WheelVibratingBug, le Python avec les dépendances de test et
+le compilateur sont déjà présents dans le parent. Les dépendances `vendor/`
+sont présentes dans ce dépôt. Il n'est pas nécessaire de les télécharger à nouveau.
+Depuis **WheelVibratingBug**, exécuter dans PowerShell :
+
+```powershell
+$env:LLVM_MINGW_ROOT = (Resolve-Path -LiteralPath '.\.toolchain\llvm-mingw-20261104-ucrt-x86_64').Path
+Push-Location -LiteralPath '.\release'
+try {
+    ..\.venv\Scripts\python.exe src/native/build.py
+    ..\.venv\Scripts\python.exe tests/test_native.py
+    ..\.venv\Scripts\python.exe src/native/package.py
+    ..\.venv\Scripts\python.exe tests/test_native_install.py
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/test_native_discovery.ps1
+    ..\.venv\Scripts\python.exe tests/test_native_menu.py
+    ..\.venv\Scripts\python.exe tests/test_native_languages.py
+} finally {
+    Pop-Location
+}
+```
+
+Vérifier la réussite de chaque commande avant de poursuivre. La variable du
+compilateur s'applique uniquement à cette session PowerShell. Les sources,
+profils, dépendances, paquets et nouveaux rapports restent dans ce dépôt ; seuls
+Python et le compilateur sont réutilisés depuis le parent. Les anciens rapports
+et l'archive 0.1.0 du parent sont conservés comme historique et retour arrière.
