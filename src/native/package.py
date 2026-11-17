@@ -40,7 +40,7 @@ def main():
         'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0Sources\\menu.ps1" %*\n'
         'if errorlevel 1 exit /b 1\n',encoding='ascii')
     cfg = json.loads((ROOT/'src/native/game-profile.json').read_text())
-    manifest = {'product':'SnowRunnerFFBFix','version':'0.2.0','packageRevision':1,'gameVersion':cfg['game_version'],
+    manifest = {'product':'SnowRunnerFFBFix','version':'0.2.0','packageRevision':2,'gameVersion':cfg['game_version'],
                 'gameSha256':cfg['game_sha256'].lower(),
                 'entrypoint':{'name':entrypoint,'sha256':hashlib.sha256((DEST/entrypoint).read_bytes()).hexdigest()},
                 'files':{name:hashlib.sha256((internal/name).read_bytes()).hexdigest() for name in files}}

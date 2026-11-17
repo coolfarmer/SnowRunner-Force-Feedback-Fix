@@ -33,12 +33,13 @@ def main():
         (path/'SnowRunner.exe').write_bytes(fake_exe)
         return path
 
-    def run(action, path, success=True, match=None):
+    def run(action, path, success=True, match=None, remove_loader=False):
         proc = subprocess.run(['powershell.exe','-NoProfile','-ExecutionPolicy','Bypass',
-            '-File',str(pkg/'manage.ps1'),'-Action',action,'-GameDirectory',str(path)],
+            '-File',str(pkg/'manage.ps1'),'-Action',action,'-GameDirectory',str(path)] +
+            (['-RemoveLoader'] if remove_loader else []),
             env=env,capture_output=True,text=True,timeout=45)
         reports.append({'action':action,'directory':str(path),'expectedSuccess':success,
-                        'exitCode':proc.returncode,'stdout':proc.stdout,'stderr':proc.stderr})
+                        'removeLoader':remove_loader,'exitCode':proc.returncode,'stdout':proc.stdout,'stderr':proc.stderr})
         assert (proc.returncode==0)==success, proc.stdout+proc.stderr
         if match: assert match in proc.stdout+proc.stderr, proc.stdout+proc.stderr
         print('PASS',action,path.parent.parent.name,flush=True)
@@ -57,7 +58,7 @@ def main():
     run('Enable',a); assert not (a/'SnowRunnerFFBFix.disabled').exists()
     run('Install',a,False,'Existing file will not be overwritten')
     run('Uninstall',a)
-    assert sorted(p.name for p in a.iterdir())==['SnowRunner.exe']
+    assert sorted(p.name for p in a.iterdir())==['SnowRunner.exe','dinput8.dll']
     untouched(a)
 
     # Installing also succeeds with an unrelated SDK file; it is preserved.
@@ -66,7 +67,7 @@ def main():
     extra = game('different-sdk')
     run('Check',extra)
     run('Install',extra)
-    run('Uninstall',extra)
+    run('Uninstall',extra,match='removed at your request',remove_loader=True)
     assert sorted(p.name for p in extra.iterdir())==['SnowRunner.exe']
     assert sdk.read_bytes()==b'unrecognized SDK fixture; never loaded'
     untouched(extra)
@@ -97,13 +98,31 @@ def main():
 
     d=game('shared-loader'); shutil.copyfile(pkg/'dinput8.dll',d/'dinput8.dll')
     run('Install',d)
-    run('Uninstall',d)
+    run('Uninstall',d,match='present before the fix',remove_loader=True)
     assert (d/'dinput8.dll').exists() and not (d/'SnowRunnerFFBFix.asi').exists()
 
     e=game('loader-other-plugin'); run('Install',e)
     (e/'other.asi').write_bytes(b'other plugin')
-    run('Uninstall',e,match='Loader preserved')
+    run('Uninstall',e,match='Loader preserved',remove_loader=True)
     assert (e/'dinput8.dll').exists() and (e/'other.asi').read_bytes()==b'other plugin'
+
+    nested=game('nested-other-plugin'); run('Install',nested)
+    (nested/'plugins/subfolder').mkdir(parents=True)
+    (nested/'plugins/subfolder/other.asi').write_bytes(b'nested plugin')
+    run('Uninstall',nested,match='Loader preserved',remove_loader=True)
+    assert (nested/'dinput8.dll').exists()
+    assert (nested/'plugins/subfolder/other.asi').read_bytes()==b'nested plugin'
+    assert not (nested/'SnowRunnerFFBFix.asi').exists()
+
+    changed=game('modified-loader'); run('Install',changed)
+    (changed/'dinput8.dll').write_bytes(b'loader replaced by another mod')
+    run('Uninstall',changed,False,'Modified installed file preserved',remove_loader=True)
+    assert (changed/'SnowRunnerFFBFix.asi').exists()
+    assert (changed/'SnowRunnerFFBFix.install.json').exists()
+    run('Uninstall',changed)
+    assert (changed/'dinput8.dll').read_bytes()==b'loader replaced by another mod'
+    assert not (changed/'SnowRunnerFFBFix.asi').exists()
+    assert not (changed/'SnowRunnerFFBFix.install.json').exists()
 
     f=game('modified-plugin'); run('Install',f)
     (f/'SnowRunnerFFBFix.asi').write_bytes(b'modified by user')
@@ -122,7 +141,7 @@ def main():
     run('Uninstall',h,False,'Invalid installation receipt')
     assert (h/'dinput8.dll').exists() and (h/'SnowRunnerFFBFix.asi').exists()
 
-    for p in (c,d,e,f,g,h): untouched(p)
+    for p in (c,d,e,f,g,h,nested,changed): untouched(p)
     report={'timestampUtc':datetime.now(timezone.utc).isoformat(),'gameLaunched':False,
             'realGameChanged':False,'tests':reports}
     (ROOT/'logs/native-installer-validation.json').write_text(json.dumps(report,indent=2)+'\n')

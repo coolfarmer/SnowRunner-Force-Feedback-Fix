@@ -4,7 +4,8 @@ param(
     [ValidateSet('Check','Install','Disable','Enable','Status','Uninstall')]
     [string]$Action = 'Check',
     [string]$GameDirectory,
-    [ValidateSet('fr','en')][string]$Language = 'en'
+    [ValidateSet('fr','en')][string]$Language = 'en',
+    [switch]$RemoveLoader
 )
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
@@ -180,25 +181,37 @@ if ($Action -eq 'Enable') {
 if ($Action -eq 'Uninstall') {
     # Complete preflight before deleting anything. No recursive deletion.
     foreach ($entry in $receipt.files) {
+        if ($entry.name -eq 'dinput8.dll' -and !$RemoveLoader) { continue }
         $dest = Target $entry.name
         if ($entry.owned -and (Test-Path -LiteralPath $dest) -and (Get-Hash $dest) -ne $entry.sha256) {
             Fail 'modifiedFile' @($dest)
         }
     }
     $otherPlugins = @()
-    foreach ($dir in @($bin,(Join-Path $bin 'scripts'),(Join-Path $bin 'plugins'),(Join-Path $bin 'update'))) {
-        if (Test-Path -LiteralPath $dir) {
-            $otherPlugins += @(Get-ChildItem -LiteralPath $dir -Filter '*.asi' -File -Recurse |
-                Where-Object FullName -NE (Target 'SnowRunnerFFBFix.asi'))
+    if ($RemoveLoader) {
+        foreach ($dir in @($bin,(Join-Path $bin 'scripts'),(Join-Path $bin 'plugins'),(Join-Path $bin 'update'))) {
+            if (Test-Path -LiteralPath $dir) {
+                $otherPlugins += @(Get-ChildItem -LiteralPath $dir -Filter '*.asi' -File -Recurse |
+                    Where-Object FullName -NE (Target 'SnowRunnerFFBFix.asi'))
+            }
         }
     }
     foreach ($entry in $receipt.files) {
+        if ($entry.name -eq 'dinput8.dll' -and !$RemoveLoader) {
+            Write-Output (T 'loaderKept'); continue
+        }
         $dest = Target $entry.name
-        if (!$entry.owned) { continue }
+        if (!$entry.owned) {
+            if ($entry.name -eq 'dinput8.dll') { Write-Output (T 'preexistingLoader') }
+            continue
+        }
         if ($entry.name -eq 'dinput8.dll' -and $otherPlugins.Count) {
             Write-Output (T 'sharedLoader'); continue
         }
-        if (Test-Path -LiteralPath $dest) { Remove-Item -LiteralPath $dest }
+        if (Test-Path -LiteralPath $dest) {
+            Remove-Item -LiteralPath $dest
+            if ($entry.name -eq 'dinput8.dll') { Write-Output (T 'loaderRemoved') }
+        }
     }
     if ((Test-Path -LiteralPath $marker) -and [IO.File]::ReadAllText($marker) -eq $markerText) {
         Remove-Item -LiteralPath $marker
