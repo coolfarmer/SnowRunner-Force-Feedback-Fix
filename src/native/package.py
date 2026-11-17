@@ -13,34 +13,39 @@ def main():
     internal = DEST/'Sources'
     internal.mkdir(parents=True, exist_ok=True)
     files = {
-        'SnowRunnerFFBFix.asi': ROOT/'build/native/SnowRunnerFFBFix.asi',
-        'dinput8.dll': ROOT/'vendor/ultimate-asi-loader/dinput8.dll',
-        'manage.ps1': ROOT/'src/native/manage.ps1',
-        'steam-paths.ps1': ROOT/'src/native/steam-paths.ps1',
-        'menu.ps1': ROOT/'src/native/menu.ps1',
-        'i18n.ps1': ROOT/'src/native/i18n.ps1',
-        'messages.json': ROOT/'src/native/messages.json',
-        'README.fr.md': ROOT/'docs/usage.fr.md',
-        'README.en.md': ROOT/'docs/usage.en.md',
-        'LICENSE-MinHook.txt': ROOT/'vendor/minhook/LICENSE.txt',
-        'LICENSE-ASI-Loader.txt': ROOT/'vendor/ultimate-asi-loader/LICENSE.txt',
+        'Payload/SnowRunnerFFBFix.asi': ROOT/'build/native/SnowRunnerFFBFix.asi',
+        'Payload/dinput8.dll': ROOT/'vendor/ultimate-asi-loader/dinput8.dll',
+        'Scripts/manage.ps1': ROOT/'src/native/manage.ps1',
+        'Scripts/steam-paths.ps1': ROOT/'src/native/steam-paths.ps1',
+        'Scripts/menu.ps1': ROOT/'src/native/menu.ps1',
+        'Installer/SnowRunnerFFBFix.Setup.exe': ROOT/'build/installer/SnowRunnerFFBFix.Setup.exe',
+        'Scripts/i18n.ps1': ROOT/'src/native/i18n.ps1',
+        'Locales/messages.json': ROOT/'src/native/messages.json',
+        'Docs/README.fr.md': ROOT/'docs/usage.fr.md',
+        'Docs/README.en.md': ROOT/'docs/usage.en.md',
+        'Licenses/LICENSE-MinHook.txt': ROOT/'vendor/minhook/LICENSE.txt',
+        'Licenses/LICENSE-ASI-Loader.txt': ROOT/'vendor/ultimate-asi-loader/LICENSE.txt',
+        'Licenses/LICENSE-Spectre.Console.txt': ROOT/'vendor/spectre-console/LICENSE.txt',
+        'Licenses/LICENSE-dotnet.txt': ROOT/'build/nuget/microsoft.netcore.app.runtime.win-x64/10.0.12/LICENSE.TXT',
+        'Licenses/THIRD-PARTY-NOTICES-dotnet.txt': ROOT/'build/nuget/microsoft.netcore.app.runtime.win-x64/10.0.12/THIRD-PARTY-NOTICES.TXT',
     }
     for name, source in files.items():
+        (internal/name).parent.mkdir(parents=True, exist_ok=True)
         if name.endswith('.ps1'):
             # Windows PowerShell 5.1 needs a BOM for accented French text.
             (internal/name).write_text(source.read_text(encoding='utf-8'),encoding='utf-8-sig')
         else: shutil.copyfile(source,internal/name)
     entrypoint = 'Install.cmd'
-    (DEST/entrypoint).write_text('@echo off\nsetlocal\ntitle SnowRunner\n'
-        'if not exist "%~dp0Sources\\menu.ps1" (\n'
+    (DEST/entrypoint).write_text('@echo off\nsetlocal\ntitle SnowRunner FFB Fix\n'
+        'if not exist "%~dp0Sources\\Installer\\SnowRunnerFFBFix.Setup.exe" (\n'
         '  echo Dossier Sources manquant / Sources folder missing.\n'
         '  echo Extrayez le ZIP complet / Extract the complete ZIP.\n'
         '  echo Entree pour fermer / Press Enter to close.\n'
         '  set /p "_ffb_close="\n  exit /b 1\n)\n'
-        'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0Sources\\menu.ps1" %*\n'
+        '"%~dp0Sources\\Installer\\SnowRunnerFFBFix.Setup.exe" %*\n'
         'if errorlevel 1 exit /b 1\n',encoding='ascii')
     cfg = json.loads((ROOT/'src/native/game-profile.json').read_text())
-    manifest = {'product':'SnowRunnerFFBFix','version':'0.2.0','packageRevision':2,'gameVersion':cfg['game_version'],
+    manifest = {'product':'SnowRunnerFFBFix','version':'0.2.0','packageRevision':4,'gameVersion':cfg['game_version'],
                 'gameSha256':cfg['game_sha256'].lower(),
                 'entrypoint':{'name':entrypoint,'sha256':hashlib.sha256((DEST/entrypoint).read_bytes()).hexdigest()},
                 'files':{name:hashlib.sha256((internal/name).read_bytes()).hexdigest() for name in files}}

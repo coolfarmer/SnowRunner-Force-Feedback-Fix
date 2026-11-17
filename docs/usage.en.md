@@ -1,14 +1,22 @@
 # SnowRunnerFFBFix — usage
 
-Version 0.2.0, package revision 2. Windows 64-bit, Steam SnowRunner
+Version 0.2.0, package revision 4. Windows 64-bit, Steam SnowRunner
 `1.907887.SNOW_DLC_19`. The plugin remains inactive if its compatibility checks
 fail. Only the Logitech G923 has previous physical test results; this
-uninstaller change does not constitute a new in-game test.
+package reorganization does not constitute a new in-game test.
 
 Extract the ZIP outside the game folder and keep `Install.cmd` with `Sources`.
 Close SnowRunner, open `Install.cmd`, select **English**, then **Install the fix**.
 Launch the game normally from Steam afterwards. Existing files are never
 overwritten. A different DLL or unfamiliar loader configuration blocks installation.
+
+Navigate the Spectre.Console menu with the arrow keys and Enter. The interface
+includes .NET; no additional runtime installation is needed. Windows PowerShell
+5.1 performs the installation operations. Keep the extracted package complete;
+the interface is not copied into the game.
+`Install.cmd --plain` offers numbered menus, also selected automatically when
+input or output is redirected. The original PowerShell menu remains available
+via `powershell.exe -NoProfile -ExecutionPolicy Bypass -File Sources/Scripts/menu.ps1`.
 
 **View status** shows the last recorded state; counters do not measure how the
 wheel feels. **More options** lets you check the installation, select the game
@@ -18,6 +26,9 @@ folder, disable or re-enable the fix. Disabling takes effect on the next launch.
 
 Close SnowRunner, open `Install.cmd` and choose **Uninstall**.
 A separate question asks whether to keep `dinput8.dll`:
+
+The first choice is selected by default. The numbers below apply to plain text
+mode; use the arrow keys and Enter in the interactive menu.
 
 - **1 — Yes, keep (default)**: pressing Enter selects this answer.
   The plugin is removed and the loader stays available for other mods.
@@ -38,7 +49,7 @@ removes the fix's receipt; after keeping the DLL, a subsequent installation
 treats it as pre-existing and protects it. The removal choice is offered during
 uninstall, not as a DLL cleanup tool without an installation receipt.
 
-For scripts: `Sources/manage.ps1 -Action Uninstall -GameDirectory <folder>` keeps
+For scripts: `Sources/Scripts/manage.ps1 -Action Uninstall -GameDirectory <folder>` keeps
 the loader without an interactive prompt. Add `-RemoveLoader` to request removal
 with the same protections. The menu provides the interactive choice.
 

@@ -7,6 +7,8 @@ logs/
 __pycache__/
 *.pyc
 *.log
+src/installer/bin/
+src/installer/obj/
 # Local investigation must never be published here
 /graphify-out/
 /investigation/
