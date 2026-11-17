@@ -24,21 +24,17 @@ Utilisez le paquet compilé : **Code → Download ZIP** sur GitHub contient uniq
 
 ## 🎮 Compatibilité
 
-**Windows 64 bits · Steam · SnowRunner `1.907887.SNOW_DLC_19`**
+**Plateforme :** Windows 64 bits\
+**Boutique :** Steam\
+**Version/Build du jeu :** `1.907887.SNOW_DLC_19`
 
-Le correctif reste inactif si la version du jeu n'est pas reconnue. Il n'est pas destiné aux consoles.
+### 🛡️ Activation sécurisée
 
-Le correctif devrait fonctionner avec tous les volants reconnus par SnowRunner, mais seul le Logitech G923 a été testé ; les autres modèles restent à valider.
+Le correctif s'active uniquement lorsqu'une version compatible du jeu est détectée. Les versions non reconnues restent inchangées, et les versions console ne sont pas prises en charge.
 
-| Volant | État des essais |
-| :--- | :--- |
-| **Logitech G923** | Testé avec le correctif **0.1.0** : aucune oscillation anormale pendant les essais rapportés, retour de force jugé normal. |
-| Autres volants Logitech | Potentiellement compatibles ; non testés. |
-| Thrustmaster | Potentiellement compatibles ; non testés. |
-| HORI | Potentiellement compatibles ; non testés. |
-| Fanatec et autres volants DirectInput | Potentiellement compatibles si le jeu utilise ce mode ; non testés. |
+### 🕹️ Prise en charge des volants
 
-Le volant doit déjà être reconnu par SnowRunner. La compatibilité potentielle repose sur l'analyse du jeu, pas sur des essais de ces modèles.
+Le correctif est conçu pour fonctionner avec tout volant reconnu par SnowRunner. Cependant, **seul le Logitech G923 a été testé**. La compatibilité avec les autres modèles n'a pas encore été vérifiée.
 
 ## 📝 Licence
 

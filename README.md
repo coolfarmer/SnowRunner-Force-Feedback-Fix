@@ -25,21 +25,17 @@ Use the compiled package: GitHub's **Code → Download ZIP** contains source cod
 
 ## 🎮 Compatibility
 
-**Windows 64-bit · Steam · SnowRunner `1.907887.SNOW_DLC_19`**
+**Platform:** Windows 64-bit\
+**Store:** Steam\
+**Game Version/Build:** `1.907887.SNOW_DLC_19`
 
-The fix stays inactive if your game version is not recognized. Console versions are not supported.
+### 🛡️ Safe Activation
 
-The fix is expected to work with all steering wheels recognized by SnowRunner, but only the Logitech G923 has been tested; other models remain unverified.
+The fix only activates when a supported game version is detected. Unrecognized versions are left untouched, and console versions are not supported.
 
-| Steering wheel | Test status |
-| :--- | :--- |
-| **Logitech G923** | Tested with fix **0.1.0**: no abnormal shaking during reported tests, with normal force feedback. |
-| Other Logitech wheels | Potentially compatible; untested. |
-| Thrustmaster | Potentially compatible; untested. |
-| HORI | Potentially compatible; untested. |
-| Fanatec and other DirectInput wheels | Potentially compatible when the game uses this mode; untested. |
+### 🕹️ Steering Wheel Support
 
-Your wheel must already be recognized by SnowRunner. Potential compatibility is based on game code analysis, not physical tests of these models.
+The fix is designed to work with any steering wheel recognized by SnowRunner. However, **only the Logitech G923 has been tested**. Compatibility with other models has not yet been verified.
 
 ## 📝 License
 
