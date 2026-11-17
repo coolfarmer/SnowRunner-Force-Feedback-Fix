@@ -1,0 +1,12 @@
+{
+  "version": "0.57.2",
+  "repository": "https://github.com/spectreconsole/spectre.console",
+  "commit": "bbbb5729dde27b58deee44f447a788eea46ee451",
+  "licenseUrl": "https://raw.githubusercontent.com/spectreconsole/spectre.console/bbbb5729dde27b58deee44f447a788eea46ee451/LICENSE.md",
+  "licenseSha256": "3b7331fb6deae7edd8e09f16173b9c61de0358c86cccd69de894ed3643d0ca91",
+  "packages": [
+    "Spectre.Console",
+    "Spectre.Console.Ansi"
+  ],
+  "packageHashes": "../../src/installer/packages.lock.json"
+}

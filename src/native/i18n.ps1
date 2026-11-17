@@ -1,6 +1,6 @@
 function Initialize-Language([string]$Code) {
     if ($Code -notin @('fr','en')) { throw 'Unsupported language code' }
-    $catalog = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'messages.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    $catalog = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../Locales/messages.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     $script:translations = $catalog.$Code
     $script:activeLanguage = $Code
 }
@@ -31,7 +31,7 @@ function Show-LocalizedError($Record) {
     Write-Host (T 'errorPrefix' @($message)) -ForegroundColor Yellow
     if (!$known) {
         # Keep OS-language exceptions out of the localized interface.
-        $diagnostic = Join-Path $PSScriptRoot 'setup-diagnostic.log'
+        $diagnostic = Join-Path (Split-Path -Parent $PSScriptRoot) 'setup-diagnostic.log'
         try {
             ($Record | Out-String) | Set-Content -LiteralPath $diagnostic -Encoding UTF8
             Write-Host (T 'diagnosticSaved' @($diagnostic))
@@ -66,6 +66,8 @@ function Show-PluginStatus([string]$LogPath) {
     elseif ($lines -match 'INACTIVE: unverified Logitech') { Write-Output (T 'inactiveSdk') }
     elseif ($lines -match 'INACTIVE: loaded code mismatch') { Write-Output (T 'inactiveCode') }
     elseif ($lines -match '^INACTIVE:') { Write-Output (T 'inactiveHook') }
+    Write-Output ''
     Write-Output (T 'counts' @($fields['applied'],$fields['failed'],$fields['skipped']))
+    Write-Output ''
     Write-Output (T 'physicalNote')
 }

@@ -35,9 +35,9 @@ def main():
 
     def run(action, path, success=True, match=None, remove_loader=False):
         proc = subprocess.run(['powershell.exe','-NoProfile','-ExecutionPolicy','Bypass',
-            '-File',str(pkg/'manage.ps1'),'-Action',action,'-GameDirectory',str(path)] +
+            '-File',str(pkg/'Scripts/manage.ps1'),'-Action',action,'-GameDirectory',str(path)] +
             (['-RemoveLoader'] if remove_loader else []),
-            env=env,capture_output=True,text=True,timeout=45)
+            env=env,capture_output=True,text=True,encoding='utf-8',timeout=45)
         reports.append({'action':action,'directory':str(path),'expectedSuccess':success,
                         'removeLoader':remove_loader,'exitCode':proc.returncode,'stdout':proc.stdout,'stderr':proc.stderr})
         assert (proc.returncode==0)==success, proc.stdout+proc.stderr
@@ -76,7 +76,7 @@ def main():
     upgrade = game('upgrade-from-0.1.0')
     entries = []
     for name in ('dinput8.dll','SnowRunnerFFBFix.asi'):
-        if name == 'dinput8.dll': shutil.copyfile(pkg/name,upgrade/name)
+        if name == 'dinput8.dll': shutil.copyfile(pkg/'Payload'/name,upgrade/name)
         else: (upgrade/name).write_bytes(b'prior plugin fixture; never loaded')
         entries.append({'name':name,'sha256':hashlib.sha256((upgrade/name).read_bytes()).hexdigest(),'owned':True})
     (upgrade/'SnowRunnerFFBFix.install.json').write_text(json.dumps({
@@ -84,7 +84,7 @@ def main():
     run('Install',upgrade,False,'Existing file will not be overwritten')
     run('Uninstall',upgrade)
     run('Install',upgrade)
-    assert hashlib.sha256((upgrade/'SnowRunnerFFBFix.asi').read_bytes()).hexdigest()==manifest['files']['SnowRunnerFFBFix.asi']
+    assert hashlib.sha256((upgrade/'SnowRunnerFFBFix.asi').read_bytes()).hexdigest()==manifest['files']['Payload/SnowRunnerFFBFix.asi']
     run('Uninstall',upgrade)
     untouched(upgrade)
 
@@ -96,7 +96,7 @@ def main():
     run('Install',c,False,'Existing file will not be overwritten')
     assert (c/'dinput8.dll').read_bytes()==b'preexisting loader' and len(list(c.iterdir()))==2
 
-    d=game('shared-loader'); shutil.copyfile(pkg/'dinput8.dll',d/'dinput8.dll')
+    d=game('shared-loader'); shutil.copyfile(pkg/'Payload/dinput8.dll',d/'dinput8.dll')
     run('Install',d)
     run('Uninstall',d,match='present before the fix',remove_loader=True)
     assert (d/'dinput8.dll').exists() and not (d/'SnowRunnerFFBFix.asi').exists()
@@ -140,6 +140,20 @@ def main():
     (h/'SnowRunnerFFBFix.install.json').write_text(json.dumps(r))
     run('Uninstall',h,False,'Invalid installation receipt')
     assert (h/'dinput8.dll').exists() and (h/'SnowRunnerFFBFix.asi').exists()
+
+    # Moving the payload must preserve missing/corrupt binary checks before any write.
+    payload = pkg/'Payload/SnowRunnerFFBFix.asi'
+    original = payload.read_bytes()
+    damaged = game('damaged-package')
+    try:
+        payload.unlink()
+        run('Install',damaged,False,'SnowRunnerFFBFix.asi')
+        assert list(damaged.iterdir()) == [damaged/'SnowRunner.exe']
+        payload.write_bytes(b'corrupted payload')
+        run('Install',damaged,False,'SnowRunnerFFBFix.asi')
+        assert list(damaged.iterdir()) == [damaged/'SnowRunner.exe']
+    finally:
+        payload.write_bytes(original)
 
     for p in (c,d,e,f,g,h,nested,changed): untouched(p)
     report={'timestampUtc':datetime.now(timezone.utc).isoformat(),'gameLaunched':False,

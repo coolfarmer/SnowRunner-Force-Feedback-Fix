@@ -47,7 +47,7 @@ def main():
 
         def operation(action,expected,code=0,target=game):
             p=subprocess.run(['powershell.exe','-NoProfile','-ExecutionPolicy','Bypass','-File',
-                str(sources/'manage.ps1'),'-Action',action,'-Language',lang,'-GameDirectory',str(target)],
+                str(sources/'Scripts/manage.ps1'),'-Action',action,'-Language',lang,'-GameDirectory',str(target)],
                 capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=25)
             return inspect(action,p,expected,code)
 
@@ -104,14 +104,14 @@ def main():
         probe=base/lang/'error-probe.ps1'
         probe.write_text("param([string]$Sources,[string]$Language)\n"
             "[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false)\n"
-            ". (Join-Path $Sources 'i18n.ps1')\nInitialize-Language $Language\n"
+            ". (Join-Path $Sources 'Scripts/i18n.ps1')\nInitialize-Language $Language\n"
             "try { throw [UnauthorizedAccessException]::new('RAW OS ERROR MUST NOT BE DISPLAYED') } catch { Show-LocalizedError $_ }\n",
             encoding='utf-8-sig')
         p=subprocess.run(['powershell.exe','-NoProfile','-ExecutionPolicy','Bypass','-File',str(probe),'-Sources',str(sources),'-Language',lang],
                          capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=20)
         out=inspect('access-error',p,t['accessDenied'])
         assert 'RAW OS ERROR' not in out
-        (sources/'messages.json').rename(sources/'messages.saved')
+        (sources/'Locales/messages.json').rename(sources/'Locales/messages.saved')
         # Resource loading fallback is also in the selected language.
         fallback='Le paquet est incomplet' if lang=='fr' else 'The package is incomplete'
         menu('\n',fallback,1)

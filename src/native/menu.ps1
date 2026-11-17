@@ -7,7 +7,7 @@ $selectedDirectory = $GameDirectory
 
 function Select-Language {
     while ($true) {
-        Write-Host "`nFrançais / English"
+        Write-Host "`nChoisissez votre langue / Choose your language`n"
         Write-Host '  1  Français'
         Write-Host '  2  English'
         Write-Host '  0  Quitter / Exit'
@@ -27,15 +27,15 @@ try {
     Initialize-Language $Language
     try { [Console]::Title = T 'title' } catch { }
 } catch {
-    if ($Language -eq 'fr') { Write-Host "Le paquet est incomplet ou illisible. Extrayez à nouveau le ZIP complet.`nAppuyez sur Entrée pour fermer." }
-    else { Write-Host "The package is incomplete or unreadable. Extract the complete ZIP again.`nPress Enter to close." }
+    if ($Language -eq 'fr') { Write-Host "Le paquet est incomplet ou illisible. Extrayez à nouveau le ZIP complet.`n`nAppuyez sur Entrée pour fermer." }
+    else { Write-Host "The package is incomplete or unreadable. Extract the complete ZIP again.`n`nPress Enter to close." }
     $null = [Console]::ReadLine()
     exit 1
 }
 function Invoke-Operation([string]$Action) {
     Write-Host ''
     try {
-        foreach ($file in @('manage.ps1','package.json','steam-paths.ps1','messages.json','i18n.ps1')) {
+        foreach ($file in @('manage.ps1','../package.json','steam-paths.ps1','../Locales/messages.json','i18n.ps1')) {
             if (!(Test-Path -LiteralPath (Join-Path $PSScriptRoot $file) -PathType Leaf)) { Fail 'missingPackage' }
         }
         $arguments = @('-NoProfile','-ExecutionPolicy','Bypass','-File',
@@ -43,7 +43,9 @@ function Invoke-Operation([string]$Action) {
         if ($script:selectedDirectory) { $arguments += @('-GameDirectory',$script:selectedDirectory) }
         if ($Action -eq 'Uninstall') {
             Write-Host (T 'keepLoaderQuestion')
+            Write-Host ''
             Write-Host (T 'keepLoaderExplanation')
+            Write-Host ''
             Write-Host (T 'keepLoaderChoices')
             while ($true) {
                 Write-Host (T 'keepLoaderPrompt') -NoNewline
@@ -108,7 +110,9 @@ try {
                 '3' { Invoke-Operation 'Enable' }
                 '4' {
                     Write-Host "`n$(T 'directoryPrompt')"
+                    Write-Host ''
                     Write-Host (T 'directoryReset')
+                    Write-Host ''
                     $path = [Console]::ReadLine()
                     if ($null -eq $path) { exit 0 }
                     $selectedDirectory = $path.Trim().Trim('"')

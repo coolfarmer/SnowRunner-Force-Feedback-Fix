@@ -16,7 +16,9 @@ try {
 Set-StrictMode -Version Latest
 $product = 'SnowRunnerFFBFix'
 $names = @('dinput8.dll','SnowRunnerFFBFix.asi')
-try { $package = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'package.json') -Raw | ConvertFrom-Json }
+$packageRoot = Split-Path -Parent $PSScriptRoot
+$payloadRoot = Join-Path $packageRoot 'Payload'
+try { $package = Get-Content -LiteralPath (Join-Path $packageRoot 'package.json') -Raw | ConvertFrom-Json }
 catch { Fail 'missingPackage' }
 . (Join-Path $PSScriptRoot 'steam-paths.ps1')
 
@@ -79,13 +81,16 @@ $receiptPath = Target 'SnowRunnerFFBFix.install.json'
 $marker = Target 'SnowRunnerFFBFix.disabled'
 $markerText = 'SnowRunnerFFBFix disabled by manage.ps1'
 if ($Action -eq 'Status') {
-    Write-Output (T 'gameDirectory' @($bin))
+    Write-Output (T 'gameDirectory' @(''))
+    Write-Output $bin
+    Write-Output ''
     $installed = Test-Path -LiteralPath $receiptPath
     $disabled = Test-Path -LiteralPath $marker
     $yesNo = if ($installed) { T 'yes' } else { T 'no' }
     Write-Output (T 'installed' @($yesNo))
     $yesNo = if ($disabled) { T 'yes' } else { T 'no' }
     Write-Output (T 'disabledNext' @($yesNo))
+    Write-Output ''
     if ($installed) { Show-PluginStatus (Target 'SnowRunnerFFBFix.log') }
     else { Write-Output (T 'notInstalledStatus') }
     exit 0
@@ -99,13 +104,13 @@ if ($Action -in @('Check','Install')) {
         Fail 'unknownGame'
     }
     foreach ($name in $names) {
-        $source = Join-Path $PSScriptRoot $name
+        $source = Join-Path $payloadRoot $name
         if (!(Test-Path -LiteralPath $source -PathType Leaf)) { Fail 'packageHash' @($name) }
         Assert-PlainFile $source
-        if ((Get-Hash $source) -ne $package.files.$name) { Fail 'packageHash' @($name) }
+        if ((Get-Hash $source) -ne $package.files."Payload/$name") { Fail 'packageHash' @($name) }
         $dest = Target $name
         if (Test-Path -LiteralPath $dest) {
-            if ($name -ne 'dinput8.dll' -or (Get-Hash $dest) -ne $package.files.$name) {
+            if ($name -ne 'dinput8.dll' -or (Get-Hash $dest) -ne $package.files."Payload/$name") {
                 Fail 'existingFile' @($dest)
             }
         }
@@ -120,7 +125,12 @@ if ($Action -in @('Check','Install')) {
     }
     if (Test-Path -LiteralPath $receiptPath) { Fail 'receiptExists' }
     if (Test-Path -LiteralPath $marker) { Fail 'markerExists' }
-    if ($Action -eq 'Check') { Write-Output (T 'checkOk'); exit 0 }
+    if ($Action -eq 'Check') {
+        Write-Output (T 'checkOk')
+        Write-Output ''
+        Write-Output (T 'checkDetails')
+        exit 0
+    }
     $created = [Collections.Generic.List[string]]::new()
     $entries = @()
     try {
@@ -129,10 +139,10 @@ if ($Action -in @('Check','Install')) {
             $owned = !(Test-Path -LiteralPath $dest)
             if ($owned) {
                 # Copy without overwrite, including a file that appears after preflight.
-                [IO.File]::Copy((Join-Path $PSScriptRoot $name), $dest, $false)
+                [IO.File]::Copy((Join-Path $payloadRoot $name), $dest, $false)
                 $created.Add($name)
             }
-            $entries += [pscustomobject]@{ name=$name; sha256=$package.files.$name; owned=$owned }
+            $entries += [pscustomobject]@{ name=$name; sha256=$package.files."Payload/$name"; owned=$owned }
         }
         $receipt = [pscustomobject]@{product=$product; version=$package.version; files=$entries}
         $bytes = [Text.Encoding]::UTF8.GetBytes(($receipt | ConvertTo-Json -Depth 5))
@@ -144,14 +154,19 @@ if ($Action -in @('Check','Install')) {
             $dest = Target $name
             if (Test-Path -LiteralPath $dest) {
                 # Never delete a binary that another actor changed during installation.
-                if ($name -eq 'SnowRunnerFFBFix.install.json' -or (Get-Hash $dest) -eq $package.files.$name) {
+                if ($name -eq 'SnowRunnerFFBFix.install.json' -or (Get-Hash $dest) -eq $package.files."Payload/$name") {
                     Remove-Item -LiteralPath $dest
                 }
             }
         }
         throw
     }
-    Write-Output (T 'installOk' @($bin))
+    Write-Output (T 'installOk')
+    Write-Output ''
+    Write-Output (T 'installDirectoryLabel')
+    Write-Output $bin
+    Write-Output ''
+    Write-Output (T 'installNextStep')
     exit 0
 }
 
@@ -168,6 +183,8 @@ foreach ($entry in $receipt.files) {
 if ($Action -eq 'Disable') {
     if (!(Test-Path -LiteralPath $marker)) { [IO.File]::WriteAllText($marker,$markerText) }
     Write-Output (T 'disableOk')
+    Write-Output ''
+    Write-Output (T 'disableDetails')
     exit 0
 }
 if ($Action -eq 'Enable') {
@@ -176,6 +193,8 @@ if ($Action -eq 'Enable') {
         Remove-Item -LiteralPath $marker
     }
     Write-Output (T 'enableOk')
+    Write-Output ''
+    Write-Output (T 'enableDetails')
     exit 0
 }
 if ($Action -eq 'Uninstall') {
@@ -217,7 +236,10 @@ if ($Action -eq 'Uninstall') {
         Remove-Item -LiteralPath $marker
     }
     Remove-Item -LiteralPath $receiptPath
+    Write-Output ''
     Write-Output (T 'uninstallOk')
+    Write-Output ''
+    Write-Output (T 'uninstallDetails')
 }
 
 } catch {
