@@ -50,8 +50,30 @@ def main():
     run('enable','4\n3\n\n0\n0\n')
     assert not (game/'SnowRunnerFFBFix.disabled').exists()
     assert 'Existing file will not be overwritten' in run('refusal-keeps-menu-open','1\n\n0\n')
-    run('uninstall','3\n\n0\n')
-    assert sorted(p.name for p in game.iterdir())==['SnowRunner.exe']
+    before={p.name:p.read_bytes() for p in game.iterdir()}
+    run('cancel-uninstall','3\n0\n0\n')
+    assert {p.name:p.read_bytes() for p in game.iterdir()}==before
+    run('uninstall-eof','3\n')
+    assert {p.name:p.read_bytes() for p in game.iterdir()}==before
+    out=run('uninstall-default-keeps-loader','3\n\n\n0\n')
+    assert 'Yes, keep (default)' in out
+    assert sorted(p.name for p in game.iterdir())==['SnowRunner.exe','dinput8.dll']
+
+    # A separate fresh installation owns its loader and can explicitly remove it.
+    remove_game=base/'Removal/Sources/Bin'
+    remove_game.mkdir(parents=True)
+    (remove_game/'SnowRunner.exe').write_bytes(fake_exe)
+    run('install-for-explicit-removal','1\n\n0\n',remove_game)
+    out=run('uninstall-explicit-removal','3\n2\n\n0\n',remove_game)
+    assert 'removed at your request' in out
+    assert sorted(p.name for p in remove_game.iterdir())==['SnowRunner.exe']
+    run('install-for-explicit-keep','1\n\n0\n',remove_game)
+    run('uninstall-invalid-then-explicit-keep','3\nx\n1\n\n0\n',remove_game)
+    assert sorted(p.name for p in remove_game.iterdir())==['SnowRunner.exe','dinput8.dll']
+    run('reinstall-with-preexisting-loader','1\n\n0\n',remove_game)
+    out=run('uninstall-protects-preexisting-loader','3\n2\n\n0\n',remove_game)
+    assert 'present before the fix' in out
+    assert sorted(p.name for p in remove_game.iterdir())==['SnowRunner.exe','dinput8.dll']
     # Manual path is input data, never a command or script fragment.
     assert 'Check passed: compatible files' in run('manual-folder','4\n4\n"'+str(game)+'"\n1\n\n0\n0\n',None)
     run('help','5\n\n0\n')
@@ -67,7 +89,7 @@ def main():
         files=z.namelist()
         assert [n for n in files if '/' not in n[len(prefix):]]==[prefix+'Install.cmd']
         m=json.loads(z.read(prefix+'Sources/package.json'))
-        assert m['version']=='0.2.0' and m['packageRevision']==1
+        assert m['version']=='0.2.0' and m['packageRevision']==2
         assert 'sdkPath' not in m and 'sdkSha256' not in m
         assert set(files)=={prefix+'Install.cmd',prefix+'Sources/package.json'} | {
             prefix+'Sources/'+name for name in m['files']}
@@ -77,7 +99,7 @@ def main():
         native=json.loads((ROOT/'logs/native-validation.json').read_text())
         assert m['files']['SnowRunnerFFBFix.asi']==native['pluginSha256']
     report={'observedUtc':datetime.now(timezone.utc).isoformat(),'cases':results,'realGameChanged':False,
-            'pluginMatchesNativeValidation':True,'version':'0.2.0','packageRevision':1}
+            'pluginMatchesNativeValidation':True,'version':'0.2.0','packageRevision':2}
     (ROOT/'logs/native-menu-validation.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(f'PASS {len(results)} menu cases and archive integrity')
 
