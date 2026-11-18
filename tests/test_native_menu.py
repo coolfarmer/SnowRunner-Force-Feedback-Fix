@@ -57,29 +57,18 @@ def main():
     run('enable','4\n3\n\n0\n0\n')
     assert not (game/'SnowRunnerFFBFix.disabled').exists()
     assert 'Existing file will not be overwritten' in run('refusal-keeps-menu-open','1\n\n0\n')
-    before={p.name:p.read_bytes() for p in game.iterdir()}
-    run('cancel-uninstall','3\n0\n0\n')
-    assert {p.name:p.read_bytes() for p in game.iterdir()}==before
-    run('uninstall-eof','3\n')
-    assert {p.name:p.read_bytes() for p in game.iterdir()}==before
-    out=run('uninstall-default-keeps-loader','3\n\n\n0\n')
-    assert 'Yes, keep (default)' in out
-    assert sorted(p.name for p in game.iterdir())==['SnowRunner.exe','dinput8.dll']
+    out=run('uninstall-without-dll-question','3\n')
+    assert 'Plugin uninstalled.' in out and 'dinput8.dll' not in out
+    assert sorted(p.name for p in game.iterdir())==['SnowRunner.exe']
 
-    # A separate fresh installation owns its loader and can explicitly remove it.
+    # The menu never asks about DLLs, including when another mod owns the loader.
     remove_game=base/'Removal/Sources/Bin'
     remove_game.mkdir(parents=True)
     (remove_game/'SnowRunner.exe').write_bytes(fake_exe)
-    run('install-for-explicit-removal','1\n\n0\n',remove_game)
-    out=run('uninstall-explicit-removal','3\n2\n\n0\n',remove_game)
-    assert 'removed at your request' in out
-    assert sorted(p.name for p in remove_game.iterdir())==['SnowRunner.exe']
-    run('install-for-explicit-keep','1\n\n0\n',remove_game)
-    run('uninstall-invalid-then-explicit-keep','3\nx\n1\n\n0\n',remove_game)
-    assert sorted(p.name for p in remove_game.iterdir())==['SnowRunner.exe','dinput8.dll']
+    shutil.copyfile(internal/'Payload/dinput8.dll',remove_game/'dinput8.dll')
     run('reinstall-with-preexisting-loader','1\n\n0\n',remove_game)
-    out=run('uninstall-protects-preexisting-loader','3\n2\n\n0\n',remove_game)
-    assert 'present before the fix' in out
+    out=run('uninstall-protects-preexisting-loader','3\n\n0\n',remove_game)
+    assert 'Plugin uninstalled.' in out and 'dinput8.dll' not in out
     assert sorted(p.name for p in remove_game.iterdir())==['SnowRunner.exe','dinput8.dll']
     # Manual path is input data, never a command or script fragment.
     assert 'Check passed: compatible files' in run('manual-folder','4\n4\n"'+str(game)+'"\n1\n\n0\n0\n',None)
@@ -100,7 +89,7 @@ def main():
         ('disable', '4\n2\n\n0\n0\n', 'Disabled for next launch.'),
         ('enable', '4\n3\n\n0\n0\n', 'Enabled for next launch.'),
         ('help', '5\n\n0\n', 'Sources\\Docs\\README.en.md'),
-        ('uninstall', '3\n2\n\n0\n', 'removed at your request'),
+        ('uninstall', '3\n', 'Plugin uninstalled.'),
     ]:
         assert expected in run('powershell-'+name, inputs, fallback_game, powershell=True)
     assert list(fallback_game.iterdir()) == [fallback_game/'SnowRunner.exe']
@@ -111,7 +100,8 @@ def main():
         files=z.namelist()
         assert [n for n in files if '/' not in n[len(prefix):]]==[prefix+'Install.cmd']
         m=json.loads(z.read(prefix+'Sources/package.json'))
-        assert m['version']=='0.2.0' and m['packageRevision']==4
+        assert m['version']=='0.2.0' and m['packageRevision']==5
+        assert {x['version'] for x in m['compatibleLoaders']} == {'8.5.0','10.0.2'}
         assert 'sdkPath' not in m and 'sdkSha256' not in m
         assert set(files)=={prefix+'Install.cmd',prefix+'Sources/package.json'} | {
             prefix+'Sources/'+name for name in m['files']}
@@ -123,7 +113,7 @@ def main():
         native=json.loads((ROOT/'logs/native-validation.json').read_text())
         assert m['files']['Payload/SnowRunnerFFBFix.asi']==native['pluginSha256']
     report={'observedUtc':datetime.now(timezone.utc).isoformat(),'cases':results,'realGameChanged':False,
-            'pluginMatchesNativeValidation':True,'version':'0.2.0','packageRevision':4}
+            'pluginMatchesNativeValidation':True,'version':'0.2.0','packageRevision':5}
     (ROOT/'logs/native-menu-validation.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(f'PASS {len(results)} menu cases and archive integrity')
 

@@ -43,7 +43,14 @@ et ne créent aucun périphérique de retour de force.
 Le paquet est créé sous `dist/SnowRunnerFFBFix-0.2.0.zip`. Il contient seulement
 `Install.cmd` et `Sources/`, organisé en `Installer/`, `Payload/`, `Scripts/`,
 `Locales/`, `Docs/` et `Licenses/`. Le manifeste `Sources/package.json` contient
-les empreintes avec des chemins relatifs à `Sources/` (révision du paquet 4). Les hôtes de test n'y sont jamais inclus.
+les empreintes avec des chemins relatifs à `Sources/` (révision du paquet 5). Les hôtes de test n'y sont jamais inclus.
+
+`src/native/compatible-loaders.json` définit les copies x64 reconnues par SHA-256.
+Le paquet reprend cette liste dans son manifeste ; aucun binaire supplémentaire
+de chargeur n'est distribué. N'ajouter une empreinte qu'après vérification du
+chargement et de l'appel à `InitializeASI`. Cela ne valide pas les interactions
+entre les mods dans le jeu. `test_native_install.py --smt-loader <dinput8.dll>`
+vérifie aussi la réutilisation de la copie exacte de SMT v1.5, sans l'exécuter.
 
 `src/installer/` contient l'interface C# Spectre.Console 0.57.2. La publication
 autonome Windows x64 embarque .NET 10.0.12, utilise le trimming et regroupe

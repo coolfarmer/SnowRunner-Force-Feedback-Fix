@@ -45,8 +45,13 @@ def main():
         '"%~dp0Sources\\Installer\\SnowRunnerFFBFix.Setup.exe" %*\n'
         'if errorlevel 1 exit /b 1\n',encoding='ascii')
     cfg = json.loads((ROOT/'src/native/game-profile.json').read_text())
-    manifest = {'product':'SnowRunnerFFBFix','version':'0.2.0','packageRevision':4,'gameVersion':cfg['game_version'],
+    loaders = json.loads((ROOT/'src/native/compatible-loaders.json').read_text())
+    assert all(entry['architecture'] == 'x64' and len(entry['sha256']) == 64 for entry in loaders)
+    assert hashlib.sha256((internal/'Payload/dinput8.dll').read_bytes()).hexdigest() in {
+        entry['sha256'] for entry in loaders}
+    manifest = {'product':'SnowRunnerFFBFix','version':'0.2.0','packageRevision':5,'gameVersion':cfg['game_version'],
                 'gameSha256':cfg['game_sha256'].lower(),
+                'compatibleLoaders':loaders,
                 'entrypoint':{'name':entrypoint,'sha256':hashlib.sha256((DEST/entrypoint).read_bytes()).hexdigest()},
                 'files':{name:hashlib.sha256((internal/name).read_bytes()).hexdigest() for name in files}}
     (internal/'package.json').write_text(json.dumps(manifest,indent=2)+'\n')

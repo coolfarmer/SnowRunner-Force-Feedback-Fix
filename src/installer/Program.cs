@@ -70,7 +70,7 @@ sealed class Installer
         }
     }
 
-    static readonly string[] SuccessKeys = ["checkOk", "installOk", "disableOk", "enableOk", "uninstallOk", "loaderRemoved"];
+    static readonly string[] SuccessKeys = ["checkOk", "installOk", "disableOk", "enableOk", "uninstallOk"];
 
     string? ReadInput()
     {
@@ -261,7 +261,7 @@ sealed class Installer
     }
 
     // The final entry is always 0 in the line-oriented fallback. EOF never confirms an action.
-    int Choose(string title, string[] labels, bool languageMenu = false, bool defaultFirst = false, bool mainMenu = false)
+    int Choose(string title, string[] labels, bool languageMenu = false, bool mainMenu = false)
     {
         if (rich)
         {
@@ -294,7 +294,6 @@ sealed class Installer
             var line = Console.ReadLine();
             if (line is null) return -1;
             line = line.Trim();
-            if (defaultFirst && line.Length == 0) return 0;
             if (int.TryParse(line, out int n) && n >= 0 && n < labels.Length)
                 return n == 0 ? labels.Length - 1 : n - 1;
             Write(languageMenu ? "Choisissez 1 ou 2 / Choose 1 or 2." : T("invalidChoice"), ErrorStyle);
@@ -305,15 +304,6 @@ sealed class Installer
 
     async Task Operate(string action)
     {
-        bool removeLoader = false;
-        if (action == "Uninstall")
-        {
-            WriteParagraph(T("keepLoaderQuestion")); WriteParagraph(T("keepLoaderExplanation"));
-            int choice = Choose(T("keepLoaderPrompt"),
-                new[] { T("keepLoaderYes"), T("keepLoaderNo"), T("cancelUninstall") }, defaultFirst: true);
-            if (choice < 0 || choice == 2) return;
-            removeLoader = choice == 1;
-        }
         try
         {
             foreach (var file in new[] { "Scripts/manage.ps1", "package.json", "Scripts/steam-paths.ps1", "Locales/messages.json", "Scripts/i18n.ps1" })
@@ -328,7 +318,6 @@ sealed class Installer
             foreach (var arg in new[] { "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
                 Path.Combine(sources, "Scripts", "manage.ps1"), "-Action", action, "-Language", language }) start.ArgumentList.Add(arg);
             if (!string.IsNullOrEmpty(directory)) { start.ArgumentList.Add("-GameDirectory"); start.ArgumentList.Add(directory); }
-            if (removeLoader) start.ArgumentList.Add("-RemoveLoader");
 
             async Task<(int Code, string Output, string Error)> Execute()
             {
@@ -358,9 +347,8 @@ sealed class Installer
     static readonly string[] RequiredKeys = ["title", "autoDirectory", "selectedDirectory", "closeGameHint", "choice",
         "install", "status", "uninstall", "options", "help", "language", "quit", "back", "check", "disable", "enable",
         "chooseDirectory", "helpText", "directoryPrompt", "directoryReset", "invalidChoice", "returnPrompt", "working",
-        "keepLoaderQuestion", "keepLoaderExplanation", "keepLoaderPrompt", "keepLoaderYes", "keepLoaderNo", "cancelUninstall",
         "missingPackage", "operationFailed", "backendUnavailable", "subtitle", "versionLabel", "gameFolderLabel",
         "automaticSteam", "mainHeading", "optionsHeading", "navigationHint", "errorPrefix", "diagnosticSaved",
-        "diagnosticUnavailable", "checkOk", "installOk", "disableOk", "enableOk", "uninstallOk", "loaderRemoved",
+        "diagnosticUnavailable", "checkOk", "installOk", "disableOk", "enableOk", "uninstallOk",
         "installDirectoryLabel", "installNextStep", "detectedDirectory"];
 }
