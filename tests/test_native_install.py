@@ -20,7 +20,7 @@ def main():
     reports = []
     # A unique directory avoids deleting or overwriting prior test evidence.
     base = Path(tempfile.mkdtemp(prefix='installer-',dir=ROOT/'build/native'))
-    shutil.copytree(ROOT/'dist/SnowRunnerFFBFix-0.2.0',base/'package')
+    shutil.copytree(ROOT/'dist/SnowRunnerFFBFix-0.2.1',base/'package')
     pkg = base/'package/Sources'
     manifest = json.loads((pkg/'package.json').read_text())
     assert 'sdkPath' not in manifest and 'sdkSha256' not in manifest

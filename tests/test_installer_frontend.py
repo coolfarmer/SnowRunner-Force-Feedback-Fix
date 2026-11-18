@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     base = Path(tempfile.mkdtemp(prefix='frontend-', dir=ROOT/'build/native'))
     package = base/"Package avec accents é & [crochets] ' apostrophe"
-    shutil.copytree(ROOT/'dist/SnowRunnerFFBFix-0.2.0', package)
+    shutil.copytree(ROOT/'dist/SnowRunnerFFBFix-0.2.1', package)
     sources = package/'Sources'
     exe = sources/'Installer/SnowRunnerFFBFix.Setup.exe'
     game = base/"Jeu é & [x]; $variable ' apostrophe/Sources/Bin"

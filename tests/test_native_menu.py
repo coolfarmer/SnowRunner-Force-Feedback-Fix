@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     base = Path(tempfile.mkdtemp(prefix='menu-', dir=ROOT/'build/native'))
     package = base/'Dossier partage & espaces'
-    shutil.copytree(ROOT/'dist/SnowRunnerFFBFix-0.2.0',package)
+    shutil.copytree(ROOT/'dist/SnowRunnerFFBFix-0.2.1',package)
     assert {p.name for p in package.iterdir()} == {'Install.cmd','Sources'}
     internal = package/'Sources'
     assert {p.name for p in internal.iterdir()} == {
@@ -94,13 +94,13 @@ def main():
         assert expected in run('powershell-'+name, inputs, fallback_game, powershell=True)
     assert list(fallback_game.iterdir()) == [fallback_game/'SnowRunner.exe']
     assert (game/'SnowRunner.exe').read_bytes()==fake_exe
-    with zipfile.ZipFile(ROOT/'dist/SnowRunnerFFBFix-0.2.0.zip') as z:
+    with zipfile.ZipFile(ROOT/'dist/SnowRunnerFFBFix-0.2.1.zip') as z:
         assert z.testzip() is None
-        prefix='SnowRunnerFFBFix-0.2.0/'
+        prefix='SnowRunnerFFBFix-0.2.1/'
         files=z.namelist()
         assert [n for n in files if '/' not in n[len(prefix):]]==[prefix+'Install.cmd']
         m=json.loads(z.read(prefix+'Sources/package.json'))
-        assert m['version']=='0.2.0' and m['packageRevision']==5
+        assert m['version']=='0.2.1' and m['packageRevision']==1
         assert {x['version'] for x in m['compatibleLoaders']} == {'8.5.0','10.0.2'}
         assert 'sdkPath' not in m and 'sdkSha256' not in m
         assert set(files)=={prefix+'Install.cmd',prefix+'Sources/package.json'} | {
@@ -113,7 +113,7 @@ def main():
         native=json.loads((ROOT/'logs/native-validation.json').read_text())
         assert m['files']['Payload/SnowRunnerFFBFix.asi']==native['pluginSha256']
     report={'observedUtc':datetime.now(timezone.utc).isoformat(),'cases':results,'realGameChanged':False,
-            'pluginMatchesNativeValidation':True,'version':'0.2.0','packageRevision':5}
+            'pluginMatchesNativeValidation':True,'version':'0.2.1','packageRevision':1}
     (ROOT/'logs/native-menu-validation.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(f'PASS {len(results)} menu cases and archive integrity')
 

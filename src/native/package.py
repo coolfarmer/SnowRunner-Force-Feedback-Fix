@@ -6,7 +6,7 @@ import shutil
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-DEST = ROOT/'dist/SnowRunnerFFBFix-0.2.0'
+DEST = ROOT/'dist/SnowRunnerFFBFix-0.2.1'
 
 
 def main():
@@ -49,7 +49,7 @@ def main():
     assert all(entry['architecture'] == 'x64' and len(entry['sha256']) == 64 for entry in loaders)
     assert hashlib.sha256((internal/'Payload/dinput8.dll').read_bytes()).hexdigest() in {
         entry['sha256'] for entry in loaders}
-    manifest = {'product':'SnowRunnerFFBFix','version':'0.2.0','packageRevision':5,'gameVersion':cfg['game_version'],
+    manifest = {'product':'SnowRunnerFFBFix','version':'0.2.1','packageRevision':1,'gameVersion':cfg['game_version'],
                 'gameSha256':cfg['game_sha256'].lower(),
                 'compatibleLoaders':loaders,
                 'entrypoint':{'name':entrypoint,'sha256':hashlib.sha256((DEST/entrypoint).read_bytes()).hexdigest()},
