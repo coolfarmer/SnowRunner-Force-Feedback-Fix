@@ -1,6 +1,6 @@
 # SnowRunnerFFBFix — usage
 
-Version 0.2.0, package revision 5. Windows 64-bit, Steam SnowRunner
+Version 0.2.1, package revision 1. Windows 64-bit, Steam SnowRunner
 `1.907887.SNOW_DLC_19`. The plugin remains inactive if its compatibility checks
 fail. Only the Logitech G923 has previous physical test results; this
 installer change does not constitute a new in-game test.

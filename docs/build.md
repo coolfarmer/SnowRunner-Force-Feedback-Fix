@@ -40,10 +40,10 @@ plugin empaqueté correspond au binaire testé. Les tests écrivent leurs rappor
 dans `logs/` et leurs jeux synthétiques dans `build/`. Ils ne lancent pas SnowRunner
 et ne créent aucun périphérique de retour de force.
 
-Le paquet est créé sous `dist/SnowRunnerFFBFix-0.2.0.zip`. Il contient seulement
+Le paquet est créé sous `dist/SnowRunnerFFBFix-0.2.1.zip`. Il contient seulement
 `Install.cmd` et `Sources/`, organisé en `Installer/`, `Payload/`, `Scripts/`,
 `Locales/`, `Docs/` et `Licenses/`. Le manifeste `Sources/package.json` contient
-les empreintes avec des chemins relatifs à `Sources/` (révision du paquet 5). Les hôtes de test n'y sont jamais inclus.
+les empreintes avec des chemins relatifs à `Sources/` (révision du paquet 1). Les hôtes de test n'y sont jamais inclus.
 
 `src/native/compatible-loaders.json` définit les copies x64 reconnues par SHA-256.
 Le paquet reprend cette liste dans son manifeste ; aucun binaire supplémentaire

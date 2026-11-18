@@ -228,7 +228,7 @@ sealed class Installer
             AnsiConsole.WriteLine();
             var info = new Grid().AddColumn().AddColumn();
             info.Width = ContentWidth;
-            info.AddRow(new Text(T("versionLabel"), Muted), new Text("0.2.0"));
+            info.AddRow(new Text(T("versionLabel"), Muted), new Text("0.2.1"));
             info.AddRow(new Text(T("gameFolderLabel"), Muted), new Text(string.IsNullOrEmpty(directory)
                 ? T("automaticSteam") : directory, string.IsNullOrEmpty(directory) ? Muted : Style.Plain));
             AnsiConsole.Write(Inset(info));

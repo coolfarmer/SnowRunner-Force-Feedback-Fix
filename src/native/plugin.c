@@ -16,7 +16,7 @@ static void WriteStatus(void) {
     ReadFixStatus(&s);
     char text[1024];
     int length = snprintf(text, sizeof(text),
-        "SnowRunnerFFBFix 0.2.0 experimental\r\nprofile=%s\r\npid=%lu\r\n%s\r\n"
+        "SnowRunnerFFBFix 0.2.1 experimental\r\nprofile=%s\r\npid=%lu\r\n%s\r\n"
         "armed=%ld\r\napplied=%lld\r\nfailed=%lld\r\nskipped=%lld\r\n"
         "Physical validation of this native plugin: pending\r\n",
         PROFILE_NAME, GetCurrentProcessId(), s.failed ? "DISARMED: memory initialization failed" : reason,

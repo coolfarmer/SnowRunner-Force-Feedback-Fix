@@ -20,7 +20,7 @@ def main():
     results=[]
     for lang,choice in [('fr','1'),('en','2')]:
         pkg=base/lang/'Package with spaces & accents'
-        shutil.copytree(ROOT/'dist/SnowRunnerFFBFix-0.2.0',pkg)
+        shutil.copytree(ROOT/'dist/SnowRunnerFFBFix-0.2.1',pkg)
         sources=pkg/'Sources'
         manifest=json.loads((sources/'package.json').read_text())
         game=base/lang/'Game/Sources/Bin'
