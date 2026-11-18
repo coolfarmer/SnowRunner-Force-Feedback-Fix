@@ -46,8 +46,8 @@ def main():
     out = run('literal-path-with-metacharacters', [*args, '--plain'], '1\n\n0\n')
     assert 'Installation terminée.\n\nDossier d\'installation :\n'+str(game)+'\n\nLancez le jeu normalement depuis Steam.' in out
     assert (game/'SnowRunnerFFBFix.asi').is_file()
-    out = run('literal-path-uninstall', args, '3\n2\n\n0\n')
-    assert 'retiré à votre demande' in out
+    out = run('literal-path-uninstall-without-dll-question', args, '3\n')
+    assert 'Désinstallation terminée.' in out and 'dinput8.dll' not in out
     assert list(game.iterdir()) == [game/'SnowRunner.exe']
 
     # Drain both output streams without deadlock; do not interpret backend markup.

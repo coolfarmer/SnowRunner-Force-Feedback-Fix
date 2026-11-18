@@ -5,6 +5,7 @@ param(
     [string]$Action = 'Check',
     [string]$GameDirectory,
     [ValidateSet('fr','en')][string]$Language = 'en',
+    # Kept for older command-line callers. Cleanup is now automatic either way.
     [switch]$RemoveLoader
 )
 $ErrorActionPreference = 'Stop'
@@ -21,13 +22,31 @@ $payloadRoot = Join-Path $packageRoot 'Payload'
 try { $package = Get-Content -LiteralPath (Join-Path $packageRoot 'package.json') -Raw | ConvertFrom-Json }
 catch { Fail 'missingPackage' }
 . (Join-Path $PSScriptRoot 'steam-paths.ps1')
+$loaderConfigPaths = @('global.ini','dinput8.ini','dinput8Hooked.dll','scripts\global.ini',
+    'plugins\global.ini','update\global.ini','scripts\dinput8.ini',
+    'plugins\dinput8.ini','update\dinput8.ini')
+
+function Test-KnownLoaderHash([string]$Hash) {
+    # Versions and filenames alone cannot establish the identity of a loader.
+    if ($Hash -eq $package.files.'Payload/dinput8.dll') { return $true }
+    if ($package.PSObject.Properties['compatibleLoaders']) {
+        foreach ($loader in $package.compatibleLoaders) {
+            if ($loader.architecture -eq 'x64' -and $loader.sha256 -eq $Hash) { return $true }
+        }
+    }
+    return $false
+}
+
+function Get-StreamHash([IO.Stream]$Stream) {
+    $algorithm = [Security.Cryptography.SHA256]::Create()
+    try { return [BitConverter]::ToString($algorithm.ComputeHash($Stream)).Replace('-','').ToLowerInvariant() }
+    finally { $algorithm.Dispose() }
+}
 
 function Get-Hash([string]$Path) {
     $stream = [IO.File]::OpenRead($Path)
-    $algorithm = [Security.Cryptography.SHA256]::Create()
-    try {
-        return [BitConverter]::ToString($algorithm.ComputeHash($stream)).Replace('-','').ToLowerInvariant()
-    } finally { $algorithm.Dispose(); $stream.Dispose() }
+    try { return Get-StreamHash $stream }
+    finally { $stream.Dispose() }
 }
 function Assert-PlainFile([string]$Path) {
     if (Test-Path -LiteralPath $Path) {
@@ -80,6 +99,33 @@ function Target([string]$Name) {
 $receiptPath = Target 'SnowRunnerFFBFix.install.json'
 $marker = Target 'SnowRunnerFFBFix.disabled'
 $markerText = 'SnowRunnerFFBFix disabled by manage.ps1'
+
+function Test-LoaderUnused {
+    # Do not follow junctions, ignore hidden plugins, or guess on unreadable trees.
+    # This is a conservative dependency scan, not proof of every possible use.
+    try {
+        foreach ($relative in $loaderConfigPaths) {
+            if (Test-Path -LiteralPath (Join-Path $bin $relative)) { return $false }
+        }
+        $pending = [Collections.Generic.Queue[string]]::new()
+        $pending.Enqueue($bin)
+        $count = 0
+        while ($pending.Count) {
+            $directory = $pending.Dequeue()
+            if ((Get-Item -LiteralPath $directory -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                return $false
+            }
+            foreach ($item in Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop) {
+                $count++
+                if ($count -gt 10000 -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) { return $false }
+                if ($item.PSIsContainer) { $pending.Enqueue($item.FullName); continue }
+                if (($item.Extension -ieq '.asi' -and $item.FullName -ine (Join-Path $bin 'SnowRunnerFFBFix.asi')) -or
+                    $item.Extension -ieq '.cxx' -or $item.Name -ieq 'Xidi.64.dll') { return $false }
+            }
+        }
+        return $true
+    } catch { return $false }
+}
 if ($Action -eq 'Status') {
     Write-Output (T 'gameDirectory' @(''))
     Write-Output $bin
@@ -110,15 +156,12 @@ if ($Action -in @('Check','Install')) {
         if ((Get-Hash $source) -ne $package.files."Payload/$name") { Fail 'packageHash' @($name) }
         $dest = Target $name
         if (Test-Path -LiteralPath $dest) {
-            if ($name -ne 'dinput8.dll' -or (Get-Hash $dest) -ne $package.files."Payload/$name") {
-                Fail 'existingFile' @($dest)
-            }
+            if ($name -ne 'dinput8.dll') { Fail 'existingFile' @($dest) }
+            if (!(Test-KnownLoaderHash (Get-Hash $dest))) { Fail 'unknownLoader' }
         }
     }
     # Unknown configuration may disable ASI loading or enable unrelated loader features.
-    foreach ($relative in @('global.ini','dinput8.ini','dinput8Hooked.dll','scripts\global.ini',
-                            'plugins\global.ini','update\global.ini','scripts\dinput8.ini',
-                            'plugins\dinput8.ini','update\dinput8.ini')) {
+    foreach ($relative in $loaderConfigPaths) {
         if (Test-Path -LiteralPath (Join-Path $bin $relative)) {
             Fail 'loaderConfig' @($relative)
         }
@@ -133,6 +176,7 @@ if ($Action -in @('Check','Install')) {
     }
     $created = [Collections.Generic.List[string]]::new()
     $entries = @()
+    $reusedLoader = $null
     try {
         foreach ($name in $names) {
             $dest = Target $name
@@ -141,8 +185,16 @@ if ($Action -in @('Check','Install')) {
                 # Copy without overwrite, including a file that appears after preflight.
                 [IO.File]::Copy((Join-Path $payloadRoot $name), $dest, $false)
                 $created.Add($name)
+                $hash = $package.files."Payload/$name"
+            } else {
+                # Recheck files that appeared after preflight. Keep the reused
+                # loader read-locked until the installation receipt is complete.
+                if ($name -ne 'dinput8.dll') { Fail 'existingFile' @($dest) }
+                $reusedLoader = [IO.File]::OpenRead($dest)
+                $hash = Get-StreamHash $reusedLoader
+                if (!(Test-KnownLoaderHash $hash)) { Fail 'unknownLoader' }
             }
-            $entries += [pscustomobject]@{ name=$name; sha256=$package.files."Payload/$name"; owned=$owned }
+            $entries += [pscustomobject]@{ name=$name; sha256=$hash; owned=$owned }
         }
         $receipt = [pscustomobject]@{product=$product; version=$package.version; files=$entries}
         $bytes = [Text.Encoding]::UTF8.GetBytes(($receipt | ConvertTo-Json -Depth 5))
@@ -160,7 +212,7 @@ if ($Action -in @('Check','Install')) {
             }
         }
         throw
-    }
+    } finally { if ($reusedLoader) { $reusedLoader.Dispose() } }
     Write-Output (T 'installOk')
     Write-Output ''
     Write-Output (T 'installDirectoryLabel')
@@ -200,37 +252,35 @@ if ($Action -eq 'Enable') {
 if ($Action -eq 'Uninstall') {
     # Complete preflight before deleting anything. No recursive deletion.
     foreach ($entry in $receipt.files) {
-        if ($entry.name -eq 'dinput8.dll' -and !$RemoveLoader) { continue }
+        if ($entry.name -eq 'dinput8.dll') { continue }
         $dest = Target $entry.name
         if ($entry.owned -and (Test-Path -LiteralPath $dest) -and (Get-Hash $dest) -ne $entry.sha256) {
             Fail 'modifiedFile' @($dest)
         }
     }
-    $otherPlugins = @()
-    if ($RemoveLoader) {
-        foreach ($dir in @($bin,(Join-Path $bin 'scripts'),(Join-Path $bin 'plugins'),(Join-Path $bin 'update'))) {
-            if (Test-Path -LiteralPath $dir) {
-                $otherPlugins += @(Get-ChildItem -LiteralPath $dir -Filter '*.asi' -File -Recurse |
-                    Where-Object FullName -NE (Target 'SnowRunnerFFBFix.asi'))
-            }
-        }
+    $loaderEntry = $receipt.files | Where-Object name -EQ 'dinput8.dll'
+    $removeOwnedLoader = $false
+    if ($loaderEntry.owned) {
+        try {
+            $loaderPath = Target 'dinput8.dll'
+            $removeOwnedLoader = (Test-Path -LiteralPath $loaderPath) -and
+                (Test-KnownLoaderHash $loaderEntry.sha256) -and
+                (Get-Hash $loaderPath) -eq $loaderEntry.sha256 -and (Test-LoaderUnused)
+        } catch { $removeOwnedLoader = $false }
     }
     foreach ($entry in $receipt.files) {
-        if ($entry.name -eq 'dinput8.dll' -and !$RemoveLoader) {
-            Write-Output (T 'loaderKept'); continue
-        }
+        if ($entry.name -eq 'dinput8.dll') { continue }
         $dest = Target $entry.name
-        if (!$entry.owned) {
-            if ($entry.name -eq 'dinput8.dll') { Write-Output (T 'preexistingLoader') }
-            continue
-        }
-        if ($entry.name -eq 'dinput8.dll' -and $otherPlugins.Count) {
-            Write-Output (T 'sharedLoader'); continue
-        }
-        if (Test-Path -LiteralPath $dest) {
-            Remove-Item -LiteralPath $dest
-            if ($entry.name -eq 'dinput8.dll') { Write-Output (T 'loaderRemoved') }
-        }
+        if ($entry.owned -and (Test-Path -LiteralPath $dest)) { Remove-Item -LiteralPath $dest }
+    }
+    if ($removeOwnedLoader) {
+        try {
+            # Recheck just before removal; uncertainty must preserve the loader.
+            $loaderPath = Target 'dinput8.dll'
+            if ((Get-Hash $loaderPath) -eq $loaderEntry.sha256 -and (Test-LoaderUnused)) {
+                Remove-Item -LiteralPath $loaderPath -ErrorAction Stop
+            }
+        } catch { Write-Verbose 'Loader preserved: it changed or could not be removed.' }
     }
     if ((Test-Path -LiteralPath $marker) -and [IO.File]::ReadAllText($marker) -eq $markerText) {
         Remove-Item -LiteralPath $marker

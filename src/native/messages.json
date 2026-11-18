@@ -70,14 +70,6 @@
     "unknownMarker": "Marqueur de désactivation non reconnu ; il a été conservé.",
     "enableOk": "Correction réactivée pour le prochain lancement.",
     "modifiedFile": "Un fichier installé a été modifié ; il est conservé : {0}",
-    "sharedLoader": "Chargeur conservé car d'autres plugins ASI sont présents.",
-    "keepLoaderQuestion": "Conserver dinput8.dll après la désinstallation du correctif ?",
-    "keepLoaderExplanation": "Ce chargeur peut être utilisé par d'autres mods. Son retrait peut les empêcher de fonctionner. Les protections contre le retrait d'un fichier préexistant, modifié ou partagé restent actives.",
-    "keepLoaderChoices": "  1  Oui, conserver (par défaut)\n  2  Non, demander le retrait de dinput8.dll\n  0  Annuler la désinstallation",
-    "keepLoaderPrompt": "Votre choix [1 — Oui, conserver] : ",
-    "loaderKept": "dinput8.dll laissé en place s'il est présent, conformément au choix de conservation.",
-    "preexistingLoader": "dinput8.dll conservé : il était présent avant l'installation du correctif.",
-    "loaderRemoved": "dinput8.dll retiré à votre demande.",
     "uninstallOk": "Désinstallation terminée.",
     "missingPackage": "Le paquet est incomplet ou illisible. Extrayez à nouveau le ZIP complet et gardez Sources à côté d'Install.cmd.",
     "accessDenied": "Accès refusé par Windows. Vérifiez les droits d'accès au dossier ; si nécessaire, relancez Install.cmd en tant qu'administrateur.",
@@ -86,9 +78,6 @@
     "unexpectedError": "Une erreur inattendue empêche de terminer l'opération.",
     "diagnosticSaved": "Détails techniques enregistrés dans : {0}",
     "diagnosticUnavailable": "Les détails techniques n'ont pas pu être enregistrés.",
-    "keepLoaderYes": "Oui, conserver (par défaut)",
-    "keepLoaderNo": "Non, demander le retrait de dinput8.dll",
-    "cancelUninstall": "Annuler la désinstallation",
     "working": "Opération en cours…",
     "backendUnavailable": "Impossible de lancer le gestionnaire d'installation Windows PowerShell. Vérifiez le paquet et les autorisations.",
     "subtitle": "Correctif du retour de force",
@@ -101,7 +90,8 @@
     "checkDetails": "Installation possible. Aucune modification effectuée.",
     "disableDetails": "Le chargeur reste installé.",
     "enableDetails": "Les contrôles de compatibilité restent actifs au démarrage du jeu.",
-    "uninstallDetails": "Les fichiers préexistants ou partagés et le journal sont conservés."
+    "uninstallDetails": "Les fichiers préexistants, modifiés ou partagés et le journal sont conservés.",
+    "unknownLoader": "Un chargeur de mods non reconnu est déjà installé. Aucun fichier n'a été modifié. Transmettez ce message au support du correctif."
   },
   "en": {
     "title": "SnowRunner FFB Fix",
@@ -174,14 +164,6 @@
     "unknownMarker": "Unknown disable marker; preserved.",
     "enableOk": "Enabled for next launch.",
     "modifiedFile": "Modified installed file preserved: {0}",
-    "sharedLoader": "Loader preserved because other ASI plugins are present.",
-    "keepLoaderQuestion": "Keep dinput8.dll after uninstalling the fix?",
-    "keepLoaderExplanation": "Other mods may use this loader. Removing it may stop them from working. Protections for pre-existing, modified or shared files still apply.",
-    "keepLoaderChoices": "  1  Yes, keep (default)\n  2  No, request removal of dinput8.dll\n  0  Cancel uninstall",
-    "keepLoaderPrompt": "Your choice [1 — Yes, keep]: ",
-    "loaderKept": "dinput8.dll left in place if present, as requested by the keep option.",
-    "preexistingLoader": "dinput8.dll preserved: it was present before the fix was installed.",
-    "loaderRemoved": "dinput8.dll removed at your request.",
     "uninstallOk": "Plugin uninstalled.",
     "missingPackage": "The package is incomplete or unreadable. Extract the full ZIP again and keep Sources next to Install.cmd.",
     "accessDenied": "Windows denied access. Check folder permissions; if needed, run Install.cmd as administrator.",
@@ -190,9 +172,6 @@
     "unexpectedError": "An unexpected error prevented the operation from completing.",
     "diagnosticSaved": "Technical details saved to: {0}",
     "diagnosticUnavailable": "Technical details could not be saved.",
-    "keepLoaderYes": "Yes, keep (default)",
-    "keepLoaderNo": "No, request removal of dinput8.dll",
-    "cancelUninstall": "Cancel uninstall",
     "working": "Working…",
     "backendUnavailable": "Could not run the Windows PowerShell installation manager. Check the package and permissions.",
     "subtitle": "Force feedback fix",
@@ -205,6 +184,7 @@
     "checkDetails": "Installation is possible. Nothing changed.",
     "disableDetails": "The loader remains installed.",
     "enableDetails": "Runtime compatibility checks still apply when the game starts.",
-    "uninstallDetails": "Existing/shared files and the diagnostic log are preserved."
+    "uninstallDetails": "Pre-existing, modified or shared files and the log are preserved.",
+    "unknownLoader": "An unrecognized mod loader is already installed. No files were changed. Send this message to the fix support contact."
   }
 }

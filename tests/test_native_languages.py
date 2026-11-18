@@ -82,10 +82,9 @@ def main():
             if detail: assert t[detail] in out
         log.write_text('broken log')
         operation('Status',t['unknownLog'])
-        out=menu('3\n\n\n0\n',t['uninstallOk'])
-        assert t['keepLoaderQuestion'] in out and t['keepLoaderChoices'] in out
-        assert t['keepLoaderPrompt'] in out and t['loaderKept'] in out
-        assert (game/'dinput8.dll').exists() and not (game/'SnowRunnerFFBFix.asi').exists()
+        out=menu('3\n',t['uninstallOk'])
+        assert 'dinput8.dll' not in out
+        assert not (game/'dinput8.dll').exists() and not (game/'SnowRunnerFFBFix.asi').exists()
         operation('Status',t['notInstalledStatus'])
         operation('Disable',t['noReceipt'],1)
         operation('Check',t['missingExe'].format(base/'missing/Sources/Bin'),1,base/'missing')

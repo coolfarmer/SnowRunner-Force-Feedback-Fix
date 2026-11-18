@@ -41,23 +41,6 @@ function Invoke-Operation([string]$Action) {
         $arguments = @('-NoProfile','-ExecutionPolicy','Bypass','-File',
                        (Join-Path $PSScriptRoot 'manage.ps1'),'-Action',$Action,'-Language',$script:Language)
         if ($script:selectedDirectory) { $arguments += @('-GameDirectory',$script:selectedDirectory) }
-        if ($Action -eq 'Uninstall') {
-            Write-Host (T 'keepLoaderQuestion')
-            Write-Host ''
-            Write-Host (T 'keepLoaderExplanation')
-            Write-Host ''
-            Write-Host (T 'keepLoaderChoices')
-            while ($true) {
-                Write-Host (T 'keepLoaderPrompt') -NoNewline
-                $answer = [Console]::ReadLine()
-                if ($null -eq $answer) { return }
-                $answer = $answer.Trim()
-                if ($answer -eq '' -or $answer -eq '1') { break }
-                if ($answer -eq '2') { $arguments += '-RemoveLoader'; break }
-                if ($answer -eq '0') { return }
-                Write-Host (T 'invalidChoice')
-            }
-        }
         & "$PSHOME\powershell.exe" @arguments
         if ($LASTEXITCODE -ne 0) { Write-Host (T 'operationFailed') -ForegroundColor Yellow }
     } catch { Show-LocalizedError $_ }
